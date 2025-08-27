@@ -31,7 +31,7 @@ pipe = pipeline(
 )
 
 # OpenAI API setup
-openai.api_key = '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'
+openai.api_key = 'your_openai_api_key_here'  # Replace with your OpenAI API key
 
 class AudioCapture:
     def __init__(self, sample_rate=16000, chunk_size=1024):
