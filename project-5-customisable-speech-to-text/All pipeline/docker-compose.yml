@@ -1,0 +1,27 @@
+---
+services:
+  pipeline:
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE:-Dockerfile}
+    command: 
+      - python3 
+      - all_pipeline.py 
+      - --recv_host 
+      - 0.0.0.0 
+      - --send_host 
+      - 0.0.0.0 
+      - --stt_model_name 
+      - large-v3 
+      - --language 
+      - auto
+    expose:
+      - 12345/tcp
+      - 12346/tcp
+    ports:
+      - 12345:12345/tcp
+      - 12346:12346/tcp
+    volumes:
+      - ./cache/:/root/.cache/
+      - ./all_pipeline.py:/usr/src/app/all_pipeline.py
+

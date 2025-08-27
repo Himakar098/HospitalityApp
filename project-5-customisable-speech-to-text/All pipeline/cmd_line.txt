@@ -1,0 +1,5 @@
+ python all_pipeline.py \                            
+    --local_mac_optimal_settings \
+    --device mps \
+    --stt_model_name large-v3 \
+    --language auto\

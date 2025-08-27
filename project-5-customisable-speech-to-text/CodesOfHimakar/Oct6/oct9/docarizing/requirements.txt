@@ -1,0 +1,9 @@
+torch
+transformers
+speechbrain
+numpy
+scipy
+sounddevice
+unidecode
+torchaudio
+whisper

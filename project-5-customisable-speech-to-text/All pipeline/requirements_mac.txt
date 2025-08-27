@@ -1,0 +1,7 @@
+nltk==3.9.1
+torch==2.4.0
+sounddevice==0.5.0
+lightning-whisper-mlx>=0.0.10  # Whisper-based STT model
+funasr>=1.1.6  # Includes paraformer STT models
+modelscope>=1.17.1  # Provides access to various STT models
+deepfilternet>=0.5.6  # Useful for noise reduction in VAD or audio processing

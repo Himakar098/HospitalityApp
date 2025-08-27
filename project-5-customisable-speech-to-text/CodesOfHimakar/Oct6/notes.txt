@@ -1,0 +1,385 @@
+Major problems 
+
+language detection from the lids
+language probabilities from the lids
+giving the weights to the identified languages
+froceing the model to transcribe it in that paticular language
+deciding that this paticular language is the best correct language.
+
+Every different model has different set of paramenters and need to the outputs differently
+
+Multiple models need to be tested form speed, performance and acuracy
+
+mms tokens are 3 lettered and when we try to extract them without knowing the 
+    language name to 2 letter ones, because of similarity in 2 letter tokens, 
+    the prediction is innaccurate.
+
+There is no accurate way to judge that this paticualr transcription is correct
+    in the real time audio, which is causing the issue to evaluate.
+
+Multiple models give multiple results making it very complex to judge the correct model
+
+Audio capture went wrong and didnot capture correctly.
+
+Audio processor went wrong and did not process properly
+
+VAD algorithems implemented are adding too much noise.
+Silenct detection is not accurate. Because of which so much gibarish(garbage) is being generated.
+
+when detecting the overall global, the values that are being passed to the dictonary are incorrect
+WhisperTocanizer doesnt have lang_to_id  for forced decoder and need to fix it with language_to_id
+
+
+
+FROM python:3.9-slim-buster
+
+WORKDIR /app
+
+COPY requirement.txt . 
+RUN pip install --no-cache-dir -r requirement.txt
+
+COPY . .
+
+CMD ["python", "check.py"]
+
+Docker Steps:
+Created docker file
+created requirement file
+moved them to the same folder as .py file
+
+bash commands:
+-- going to the location
+cd /Users/bhanu/Downloads/CodesOfHimakar/Oct6/oct9/docarizing/
+docker build -t audio-transcription .
+--- will throw error if there is no docker app, need to run docker demon
+
+docker run -it --device /dev/snd:/dev/snd -v $(pwd):/app audio-transcription
+--- docker: Error response from daemon: error gathering device information while adding custom device "/dev/snd": no such file or directory.
+
+this error because the /dev/snd device doesn't exist within the Docker context. This is a common issue when using Docker Desktop for Mac, as it runs within a virtual machine.
+
+Here's why this happens and how to fix it:
+
+Why the error occurs:
+Docker Desktop's Virtual Machine: Docker Desktop on Mac uses a lightweight virtual machine to run containers. This virtualization layer adds complexity to accessing host devices like your sound card.
+Device Visibility: The /dev/snd device represents your sound card on the host machine (your Mac). However, this device isn't directly visible within the Docker Desktop virtual machine.
+
+Use the Host's PulseAudio Server:
+
+Install PulseAudio on your Mac: If you don't have it already, install PulseAudio. You can use Homebrew (brew install pulseaudio).
+Share the PulseAudio socket: When running your Docker container, mount the PulseAudio socket from your host machine:
+This allows the container to use your Mac's PulseAudio server for audio input/output.
+
+brew install pulseaudio
+docker run -it -v /run/user/$(id -u)/pulse:/run/user/$(id -u)/pulse -v $(pwd):/app audio-transcription
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Map for MMS 3-letter tokens to Whisper 2-letter tokens
+mms_to_whisper = {
+    "ara": "ar",  # Arabic
+    "cmn": "zh",  # Chinese
+    "eng": "en",  # English
+    "spa": "es",  # Spanish
+    "fra": "fr",  # French
+    "mlg": "mg",  # Malagasy
+    "swe": "sv",  # Swedish
+    "por": "pt",  # Portuguese
+    "vie": "vi",  # Vietnamese
+    "ful": "Fula",  # Fula (Fulani)
+    "sun": "su",  # Sundanese
+    "asm": "as",  # Assamese
+    "ben": "bn",  # Bengali
+    "zlm": "ms",  # Malay
+    "kor": "ko",  # Korean
+    "ind": "id",  # Indonesian
+    "hin": "hi",  # Hindi
+    "tuk": "tk",  # Turkmen
+    "urd": "ur",  # Urdu
+    "aze": "az",  # Azerbaijani
+    "slv": "sl",  # Slovenian
+    "mon": "mn",  # Mongolian
+    "hau": "ha",  # Hausa
+    "tel": "te",  # Telugu
+    "swh": "sw",  # Swahili
+    "bod": "bo",  # Tibetan
+    "rus": "ru",  # Russian
+    "tur": "tr",  # Turkish
+    "heb": "he",  # Hebrew
+    "mar": "mr",  # Marathi
+    "som": "so",  # Somali
+    "tgl": "tl",  # Tagalog
+    "tat": "tt",  # Tatar
+    "tha": "th",  # Thai
+    "cat": "ca",  # Catalan
+    "ron": "ro",  # Romanian
+    "mal": "ml",  # Malayalam
+    "bel": "be",  # Belarusian
+    "pol": "pl",  # Polish
+    "yor": "yo",  # Yoruba
+    "nld": "nl",  # Dutch
+    "bul": "bg",  # Bulgarian
+    "hat": "ht",  # Haitian Creole
+    "afr": "af",  # Afrikaans
+    "isl": "is",  # Icelandic
+    "amh": "am",  # Amharic
+    "tam": "ta",  # Tamil
+    "hun": "hu",  # Hungarian
+    "hrv": "hr",  # Croatian
+    "lit": "lt",  # Lithuanian
+    "cym": "cy",  # Welsh
+    "fas": "fa",  # Persian
+    "mkd": "mk",  # Macedonian
+    "ell": "el",  # Greek
+    "bos": "bs",  # Bosnian
+    "deu": "de",  # German
+    "sqi": "sq",  # Albanian
+    "jav": "jw",  # Javanese
+    "nob": None,  # Norwegian Bokmål
+    "uzb": "uz",  # Uzbek
+    "snd": "sd",  # Sindhi
+    "lat": "la",  # Latin
+    "nya": None,  # Chichewa
+    "grn": "guarani",  # Guarani
+    "mya": "my",  # Burmese
+    "orm": None,  # Oromo
+    "lin": "ln",  # Lingala
+    "hye": "hy",  # Armenian
+    "yue": "yue",  # Cantonese
+    "pan": "pa",  # Panjabi
+    "jpn": "ja",  # Japanese
+    "kaz": "kk",  # Kazakh
+    "npi": "ne",  # Nepali
+    "kat": "ka",  # Georgian
+    "guj": "gu",  # Gujarati
+    "kan": "kn",  # Kannada
+    "tgk": "tg",  # Tajik
+    "ukr": "uk",  # Ukrainian
+    "ces": "cs",  # Czech
+    "lav": "lv",  # Latvian
+    "bak": "ba",  # Bashkir
+    "khm": "km",  # Khmer
+    "fao": "fo",  # Faroese
+    "glg": "gl",  # Galician
+    "ltz": "lb",  # Luxembourgish
+    "lao": "lo",  # Lao
+    "mlt": "mt",  # Maltese
+    "sin": "si",  # Sinhala
+    "sna": "sn",  # Shona
+    "ita": "it",  # Italian
+    "srp": "sr",  # Serbian
+    "mri": "mi",  # Māori
+    "nno": "nn",  # Norwegian Nynorsk
+    "pus": "ps",  # Pushto
+    "eus": "eu",  # Basque
+    "ory": None,  # Oriya
+    "lug": None,  # Luganda
+    "bre": "br",  # Breton
+    "luo": None,  # Luo
+    "slk": "sk",  # Slovak
+    "fin": "fi",  # Finnish
+    "dan": "da",  # Danish
+    "yid": "yi",  # Yiddish
+    "est": "et",  # Estonian
+    "ceb": "cebuano",  # Cebuano
+    "war": "waray",  # Waray
+    "san": "sa",  # Sanskrit
+    "kir": None,  # Kyrgyz
+    "oci": "oc",  # Occitan
+    "wol": None,  # Wolof
+    "haw": "haw",  # Hawaiian
+    "kam": None,  # Kamba
+    "umb": None,  # Umbundu
+    "xho": None,  # Xhosa
+    "epo": "esperanto",  # Esperanto
+    "zul": None,  # Zulu
+    "ibo": None,  # Igbo
+    "abk": "Abkhazian",  # Abkhazian
+    "ckb": None,  # Kurdish (CKB)
+    "nso": None,  # Northern Sotho
+    "gle": None,  # Irish
+    "kea": None,  # Kabuverdianu
+    "ast": None,  # Asturian
+    "sco": "scots",  # Scots
+    "glv": "manx",  # Manx
+    "ina": "interlingua"  # Interlingua
+}
+
+Here’s a look at the `None` languages in your `mms_to_whisper` mapping and suggestions for closely resembling languages from the Whisper languages:
+
+1. **Norwegian Bokmål (nob)**:
+   - Closely resembles **Norwegian (nor)**, which is already mapped in Whisper as **no**.
+  
+2. **Chichewa (nya)**:
+   - Closely resembles **Zulu (zul)**, which is already mapped in Whisper as **zu**. 
+
+3. **Oromo (orm)**:
+   - Could be compared to **Amharic (amh)**, which is mapped as **am**.
+  
+4. **Cantonese (yue)**:
+   - Closely resembles **Mandarin (cmn)**, which is mapped as **zh**.
+  
+5. **Kyrgyz (kir)**:
+   - Closely resembles **Kazakh (kaz)**, which is mapped as **kk**.
+
+6. **Wolof (wol)**:
+   - Could be compared to **Hausa (hau)**, which is mapped as **ha**.
+
+7. **Kamba (kam)**:
+   - Closely resembles **Swahili (swh)**, which is mapped as **sw**.
+
+8. **Umbundu (umb)**:
+   - Closely resembles **Portuguese (por)**, which is mapped as **pt**, especially in Angola where both languages are spoken.
+
+9. **Xhosa (xho)**:
+   - Closely resembles **Zulu (zul)**, which is already mapped as **zu**.
+
+10. **Zulu (zul)**:
+    - Directly represents itself and does not closely resemble any others.
+
+11. **Igbo (ibo)**:
+    - There isn't a direct resemblance, but it is another Nigerian language like **Hausa (hau)**, which is mapped.
+
+12. **Irish (gle)**:
+    - Closely resembles **Scottish Gaelic (gla)**, which is not in the provided list but can be related to **Welsh (cym)** which is already mapped.
+
+13. **Kabuverdianu (kea)**:
+    - Closely resembles **Portuguese (por)** since Kabuverdianu is based on Portuguese.
+
+14. **Asturian (ast)**:
+    - Closely resembles **Spanish (spa)**, which is mapped as **es**.
+
+For each of these `None` entries, you can consider mapping them to the languages they closely resemble based on their characteristics or geographical context. Would you like to proceed with these suggestions?
+
+
+
+# Define supported languages for Whisper using the keys from the LANGUAGES dictionary
+LANGUAGES = {
+    "en": "english",
+    "zh": "chinese",
+    "de": "german",
+    "es": "spanish",
+    "ru": "russian",
+    "ko": "korean",
+    "fr": "french",
+    "ja": "japanese",
+    "pt": "portuguese",
+    "tr": "turkish",
+    "pl": "polish",
+    "ca": "catalan",
+    "nl": "dutch",
+    "ar": "arabic",
+    "sv": "swedish",
+    "it": "italian",
+    "id": "indonesian",
+    "hi": "hindi",
+    "fi": "finnish",
+    "vi": "vietnamese",
+    "he": "hebrew",
+    "uk": "ukrainian",
+    "el": "greek",
+    "ms": "malay",
+    "cs": "czech",
+    "ro": "romanian",
+    "da": "danish",
+    "hu": "hungarian",
+    "ta": "tamil",
+    "no": "norwegian",
+    "th": "thai",
+    "ur": "urdu",
+    "hr": "croatian",
+    "bg": "bulgarian",
+    "lt": "lithuanian",
+    "la": "latin",
+    "mi": "maori",
+    "ml": "malayalam",
+    "cy": "welsh",
+    "sk": "slovak",
+    "te": "telugu",
+    "fa": "persian",
+    "lv": "latvian",
+    "bn": "bengali",
+    "sr": "serbian",
+    "az": "azerbaijani",
+    "sl": "slovenian",
+    "kn": "kannada",
+    "et": "estonian",
+    "mk": "macedonian",
+    "br": "breton",
+    "eu": "basque",
+    "is": "icelandic",
+    "hy": "armenian",
+    "ne": "nepali",
+    "mn": "mongolian",
+    "bs": "bosnian",
+    "kk": "kazakh",
+    "sq": "albanian",
+    "sw": "swahili",
+    "gl": "galician",
+    "mr": "marathi",
+    "pa": "punjabi",
+    "si": "sinhala",
+    "km": "khmer",
+    "sn": "shona",
+    "yo": "yoruba",
+    "so": "somali",
+    "af": "afrikaans",
+    "oc": "occitan",
+    "ka": "georgian",
+    "be": "belarusian",
+    "tg": "tajik",
+    "sd": "sindhi",
+    "gu": "gujarati",
+    "am": "amharic",
+    "yi": "yiddish",
+    "lo": "lao",
+    "uz": "uzbek",
+    "fo": "faroese",
+    "ht": "haitian creole",
+    "ps": "pashto",
+    "tk": "turkmen",
+    "nn": "nynorsk",
+    "mt": "maltese",
+    "sa": "sanskrit",
+    "lb": "luxembourgish",
+    "my": "myanmar",
+    "bo": "tibetan",
+    "tl": "tagalog",
+    "mg": "malagasy",
+    "as": "assamese",
+    "tt": "tatar",
+    "haw": "hawaiian",
+    "ln": "lingala",
+    "ha": "hausa",
+    "ba": "bashkir",
+    "jw": "javanese",
+    "su": "sundanese",
+    "yue": "cantonese",
+}
+
+# Create a list of supported languages by extracting the keys from the LANGUAGES dictionary
+supported_languages = list(LANGUAGES.keys())
+
+# Now supported_languages contains all the language codes from the LANGUAGES dictionary
+print(supported_languages)  # Optional: Print the supported languages for verification
